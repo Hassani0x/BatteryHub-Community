@@ -42,11 +42,13 @@ constexpr DWORD POLL_SECONDS[] = { 30, 60, 120, 300, 600, 900, 1800, 3600 };
 constexpr int LOW_BATTERY = 15;
 constexpr UINT PLACEHOLDER_ID = 1;
 constexpr UINT ALERT_ICON_ID = 2;
+constexpr DWORD WIDGET_OFFSETS[] = { 0, 16, 32, 48, 64, 96, 128, 192, 256 };
 
 enum MenuId : UINT {
     ID_REFRESH = 100, ID_AUTOSTART, ID_HIDE_LAST_KNOWN, ID_WIDGET_BACKGROUND, ID_EXIT, ID_MODE_WIDGET, ID_MODE_TRAY, ID_SUPPORT, ID_REPORT,
     ID_BRAND_COLORS, ID_STACKED, ID_SHOW_DISCONNECTED, ID_RECORD_HISTORY, ID_DIM_SLEEPING,
     ID_POLL_FIRST = 500,  // "Check battery every": ID_POLL_FIRST + 0..7
+    ID_OFFSET_FIRST = 600,
     ID_UPDATE = 200, ID_AUTO_UPDATE,
     ID_LANG_AUTO = 400, ID_LANG_ADD, ID_LANG_FIRST,  // "Language": ID_LANG_FIRST + 0..63
     ID_MONITOR_ALL = 300, ID_MONITOR_MAIN, ID_MONITOR_FIRST,  // "Show the widget on": ID_MONITOR_FIRST + 0..31
@@ -877,6 +879,16 @@ void ShowMenu() {
     UINT bgFlags = MF_STRING | (g_widgetBackground ? MF_CHECKED : 0) | (g_wantWidget ? 0 : MF_GRAYED);
     AppendMenuW(m, bgFlags, ID_WIDGET_BACKGROUND, T(L"Background behind taskbar text (for transparent taskbars)"));
     AppendMenuW(m, MF_STRING | (g_stacked ? MF_CHECKED : 0) | (g_wantWidget ? 0 : MF_GRAYED), ID_STACKED, T(L"Icons above percentages (narrower)"));
+    {
+        HMENU sub = CreatePopupMenu();
+        DWORD offset = 0, size = sizeof(offset);
+        RegGetValueW(HKEY_CURRENT_USER, kSettingsKey, L"TaskbarOffset", RRF_RT_REG_DWORD, nullptr, &offset, &size);
+        for (UINT i = 0; i < ARRAYSIZE(WIDGET_OFFSETS); ++i) {
+            std::wstring label = TF(L"{pixels} px", { { L"pixels", std::to_wstring(WIDGET_OFFSETS[i]) } });
+            AppendMenuW(sub, MF_STRING | (offset == WIDGET_OFFSETS[i] ? MF_CHECKED : 0), ID_OFFSET_FIRST + i, label.c_str());
+        }
+        AppendMenuW(m, MF_POPUP | (g_wantWidget ? 0 : MF_GRAYED), (UINT_PTR)sub, T(L"Space from notification area"));
+    }
     // With more than one monitor: choose which taskbars show the widget (all, main only, or one monitor).
     auto monitors = widget::OtherMonitors();
     if (monitors.size() > 31) monitors.resize(31);
@@ -972,7 +984,11 @@ void ShowMenu() {
         case ID_AUTO_UPDATE: updates::ToggleAutomatic(); break;
         case ID_EXIT: DestroyWindow(g_hwnd); break;
         default:
-            if (cmd >= ID_POLL_FIRST && cmd < ID_POLL_FIRST + ARRAYSIZE(POLL_SECONDS)) {
+            if (cmd >= ID_OFFSET_FIRST && cmd < ID_OFFSET_FIRST + ARRAYSIZE(WIDGET_OFFSETS)) {
+                DWORD offset = WIDGET_OFFSETS[cmd - ID_OFFSET_FIRST];
+                RegSetKeyValueW(HKEY_CURRENT_USER, kSettingsKey, L"TaskbarOffset", REG_DWORD, &offset, sizeof(offset));
+                widget::Reposition();
+            } else if (cmd >= ID_POLL_FIRST && cmd < ID_POLL_FIRST + ARRAYSIZE(POLL_SECONDS)) {
                 SetPollSeconds(POLL_SECONDS[cmd - ID_POLL_FIRST]);
             } else if (cmd >= ID_LANG_FIRST && cmd < ID_LANG_FIRST + languages.size()) {
                 SetLanguage(languages[cmd - ID_LANG_FIRST].code);

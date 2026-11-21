@@ -36,6 +36,10 @@ clean:
 
 test: test-update-core test-update-win test-update-signature
 	@mkdir -p build
+	$(CXX) -std=c++17 -O2 -Wall -Wextra tests/widget_geometry_test.cpp -o build/widget_geometry_test.exe
+	./build/widget_geometry_test.exe
+	$(CXX) $(CXXFLAGS) tests/widget_layout_test.cpp src/brands.cpp src/i18n.cpp -o build/widget_layout_test.exe -lole32 -loleaut32 -lcomctl32 -lgdi32 -lshell32
+	./build/widget_layout_test.exe
 	$(CXX) -std=c++17 -O2 -Wall tests/device_aliases_test.cpp -o build/device_aliases_test.exe
 	./build/device_aliases_test.exe
 	$(CXX) -std=c++17 -O2 -Wall -Wextra tests/alert_rules_test.cpp -o build/alert_rules_test.exe

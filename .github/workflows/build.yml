@@ -2,9 +2,9 @@ name: build
 
 on:
   push:
-    branches: [main]
     tags: ["v*"]
   pull_request:
+  workflow_dispatch:
 
 # Read-only by default: builds of pull requests cannot change the repository or releases.
 permissions:
@@ -37,7 +37,7 @@ jobs:
 
       - name: Build BatteryHub.exe
         shell: msys2 {0}
-        run: make VERSION="$WB_VERSION" CHANNEL="$WB_CHANNEL"
+        run: make -j2 VERSION="$WB_VERSION" CHANNEL="$WB_CHANNEL"
 
       - name: Test device protocols and Windows updater
         shell: msys2 {0}
@@ -70,7 +70,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-      pull-requests: read  # the Discord announcement reads merged PR titles
     steps:
       - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
         with:
@@ -81,17 +80,7 @@ jobs:
           files: dist/*
           append_body: true
           body: |
-            Enjoying BatteryHub? Support it on [Ko-fi](https://ko-fi.com/krisgfx), [PayPal](https://www.paypal.com/paypalme/krisgfx) or [GitHub Sponsors](https://github.com/sponsors/krisgfx9).
-
-      # Announce the release on Discord: first what changed, then the newly supported devices.
-      # The webhook lives in the DISCORD_WEBHOOK repository secret, never in the code. A failed post
-      # does not fail the release.
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
-        with:
-          fetch-depth: 0
-      - name: Announce on Discord
-        continue-on-error: true
-        env:
-          DISCORD_WEBHOOK: ${{ secrets.DISCORD_WEBHOOK }}
-          GITHUB_TOKEN: ${{ github.token }}
-        run: python3 scripts/discord-release.py --tag "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY"
+            Community build maintained by Hassani0x, based on krisgfx9/BatteryHub.
+            Download the Setup EXE to install without Git, GitHub CLI, or a GitHub account.
+            See README.md and docs/ISSUE_REVIEW.md for tested changes and remaining limitations.
+            This fork does not use the upstream automatic-update channel.

@@ -1,4 +1,27 @@
-# Contributing
+# Contributing to BatteryHub Community
+
+This independent fork is maintained by [Hassani0x](https://github.com/Hassani0x).
+Report fork regressions and submit pull requests to
+[BatteryHub-Community](https://github.com/Hassani0x/BatteryHub-Community).
+Check [the upstream issue inventory](docs/UPSTREAM_ISSUES.csv) before opening a duplicate.
+
+## Pull requests
+
+1. Branch from `main` and keep each change focused on a reproducible problem.
+2. Link the relevant upstream issue using its full URL; describe before/after behavior.
+3. Add a regression test where appropriate and run `make test VERSION=1.1.1 CHANNEL=dev`.
+4. Build the application; report which Windows version, DPI, taskbar orientation and devices you tested.
+5. Distinguish simulated protocol tests from real hardware validation. List remaining limitations explicitly.
+6. Update user documentation and translation keys when changing visible behavior.
+
+Do not guess HID commands or claim that a device ID alone establishes protocol compatibility.
+Preserve the GPL license, third-party notices and original contributor credit.
+Release builds in this fork must keep `CHANNEL=dev`; never impersonate the official signed-update channel.
+The release workflow publishes Windows installers and portable archives. Signing keys and credentials must never enter Git.
+
+The detailed upstream development guidance follows.
+
+# Upstream development guide
 
 ## Reporting whether a device works
 
